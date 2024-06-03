@@ -1,30 +1,42 @@
 package org.example;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.*;
 
-public class Main {
+public class SqlQuiz {
     // Initialize variables
     static int score;
     static int point;
     static String name;
     static String quizDifficulty;
     static String quizAnswer;
+    static String url;
+    static String username;
+    static String password;
+    static Connection connection;
+    static Statement statement;
+    static String query;
+    static ResultSet result;
+
     // Input stream
     static BufferedReader getInput = new BufferedReader( new InputStreamReader(System.in));
-    public static void main(String[] args) throws Exception{
+
+    static void Connect() throws ClassNotFoundException, SQLException {
         // Set up connect to local database
-        String url = "jdbc:mysql://localhost:3306/sql_quiz";
-        String username = "root";
-        String password = "gensparksql";
+        url = "jdbc:mysql://localhost:3306/sql_quiz";
+        username = "root";
+        password = "gensparksql";
         Class.forName("com.mysql.cj.jdbc.Driver");
-        Connection connection = DriverManager.getConnection(url,username,password);
-        Statement statement = connection.createStatement();
+        connection = DriverManager.getConnection(url,username,password);
+        statement = connection.createStatement();
 
         // Query to get all the questions, answers, difficulties
-        String query = "SELECT * FROM sqlquiz";
-        ResultSet result = null;
+        query = "SELECT * FROM sqlquiz";
+        result = null;
+    }
+    static void SelectDifficulty() throws IOException {
         // Beginning of quiz
         System.out.println("Welcome to SQL quiz");
         System.out.println("Please Enter Your Name:");
@@ -51,6 +63,9 @@ public class Main {
                 System.out.println("Try 1 to 3");
             }
         }
+    }
+
+    static void quiz(){
         try {
             // Set up query to retrieve the questions and answers
             result = statement.executeQuery(query);
@@ -79,8 +94,12 @@ public class Main {
             System.out.println("\nYour Score is: " + score);
         } catch (SQLException e){
             e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+    }
 
+    static void UpdateScore(){
         // Check if data back can retrieve the name from the database
         String readQuery = "SELECT * FROM highscore WHERE name = '" + name + "'";
         try {
@@ -106,7 +125,7 @@ public class Main {
                 System.out.println(" Your Score has been successfully added");
             }
             // Only print out top 10 scorer
-            readQuery = "SELECT name,score FROM highscore LIMIT 10";
+            readQuery = "SELECT name,score FROM highscore ORDER BY score DESC LIMIT 10";
             result = statement.executeQuery(readQuery);
             // Print out leader board
             System.out.println("\n--== Leader Board ==--");
@@ -116,7 +135,12 @@ public class Main {
 
         } catch (SQLException e){
             e.printStackTrace();
-
         }
+    }
+    public static void main(String[] args) throws Exception{
+        Connect();
+        SelectDifficulty();
+        quiz();
+        UpdateScore();
     }
 }
