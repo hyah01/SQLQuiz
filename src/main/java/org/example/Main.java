@@ -20,7 +20,7 @@ public class Main {
         Statement statement = connection.createStatement();
 
         String query = "SELECT * FROM sqlquiz";
-        ResultSet result;
+        ResultSet result = null;
         System.out.println("Welcome to SQL quiz");
         System.out.println("Please Enter Your Name:");
         name = getInput.readLine();
@@ -62,18 +62,43 @@ public class Main {
 
                 }
             }
-            System.out.println("Your Score is: " + score);
+            System.out.println("\nYour Score is: " + score);
         } catch (SQLException e){
             e.printStackTrace();
         }
 
-        String readQuery = "SELECT name FROM highscore WHERE name = '" + name + "'";
+        String readQuery = "SELECT * FROM highscore WHERE name = '" + name + "'";
         try {
             result = statement.executeQuery(readQuery);
-            System.out.println(result.next());
+            if (result.next()){
+                if (result.getInt("score") < score){
+                    String updateQuery = "UPDATE highscore SET score = ? WHERE name = ?";
+                    PreparedStatement createStatement = connection.prepareStatement(updateQuery);
+                    createStatement.setString(2,name);
+                    createStatement.setInt(1,score);
+                    createStatement.executeUpdate();
+                    System.out.println(" Your Score has been successfully updated");
+                }
+            } else{
+                String createQuery = "INSERT INTO highscore (name, score) VALUES (? , ?)";
+                PreparedStatement createStatement = connection.prepareStatement(createQuery);
+                createStatement.setString(1,name);
+                createStatement.setInt(2,score);
+                createStatement.executeUpdate();
+                System.out.println(" Your Score has been successfully added");
+            }
+            readQuery = "SELECT name,score FROM highscore LIMIT 10";
+            result = statement.executeQuery(readQuery);
+            System.out.println("\n--== Leader Board ==--");
+            while(result.next()){
+                System.out.println(result.getString("name") + " : " + result.getInt("score"));
+            }
+
         } catch (SQLException e){
             e.printStackTrace();
+
         }
+
 
 
     }
