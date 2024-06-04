@@ -59,4 +59,60 @@ public class QuizTest {
 
     }
 
+    @Test
+    public void testQuestionAnswer() throws ClassNotFoundException, SQLException {
+        String[] simulatedInput = {"SELECT name FROM employees;\n","SELECT * FROM customers;\n","SELECT * FROM customers;\n","g\n","g\n"};
+        int[] results = {1,2,2,2};
+
+        String url = "jdbc:mysql://localhost:3306/sql_quiz";
+        String username = "root";
+        String password = "gensparksql";
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        Connection connection = DriverManager.getConnection(url,username,password);
+        Statement statement = connection.createStatement();
+        String query = "SELECT * FROM sqlquiz";
+        ResultSet result = statement.executeQuery(query);
+
+        int score = 0;
+        int point = 1;
+        int i = 0;
+        try {
+            // Set up query to retrieve the questions and answers
+            while (result.next()) {
+                String question = result.getString(2);
+                String answer = result.getString(3);
+                String difficulty = result.getString(4);
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(simulatedInput[i].getBytes());
+                System.setIn(inputStream);
+                BufferedReader getInput = new BufferedReader(new InputStreamReader(System.in));
+                // Only print out question that correlate to the difficulty the user picked
+                if (difficulty.equals("easy")) {
+                    System.out.println("Question:" + question);
+                    String quizAnswer = getInput.readLine();
+                    // Answer will ignore spaces and capitalization for user's convenient
+                    if (quizAnswer.replaceAll("\\s", "").equalsIgnoreCase(answer.replaceAll("\\s", ""))) {
+                        // If answered correctly, points will be rewarded
+                        score += point;
+                        System.out.println("Correct!");
+                        assertEquals(results[i],score);
+                    } else {
+                        // If user answered question wrong, it will tell them the answers
+                        System.out.println("The correct answer is:");
+                        System.out.println(answer + "\n");
+                        assertEquals(results[i],score);
+                    }
+                    i++;
+                }
+            }
+            // Print out score at the end
+            System.out.println("\nYour Score is: " + score);
+            assertEquals(2,score);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
 }
